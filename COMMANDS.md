@@ -135,7 +135,7 @@ mise run count -- "$VIDEO" \
   --backend checkpoint --device cpu --video --debug \
   --max-frames 80
 
-# Full video
+# Full video #bogi
 mise run count -- "$VIDEO" \
   --out out/${NAME}_count \
   --weights runs/detect/bags_${NAME}/checkpoint_best_ema.pth \
