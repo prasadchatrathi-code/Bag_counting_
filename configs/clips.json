@@ -1,0 +1,9 @@
+{
+  "_comment": "Historical metadata for clips derived from the original full recording 'assets/Bags Loading video.mp4' (not present in this checkout; overlay starts at 11:34:59 on 2026-06-10). The local sample is assets/bags-loading-clip-5min.mp4.",
+  "early_1140": {"wall_start": "2026-06-10T11:39:59", "source_offset_s": 300, "phase": "hand-up (empty truck, bags handed over the tailgate)"},
+  "mid_1300":   {"wall_start": "2026-06-10T12:59:59", "source_offset_s": 5100, "phase": "walk-in (bags carried up the bed)"},
+  "late_1520":  {"wall_start": "2026-06-10T14:54:59", "source_offset_s": 12000, "phase": "hand-pass (stack above the side walls)"},
+  "last_1505":  {"wall_start": "2026-06-10T15:05:21", "source_offset_s": 12622, "phase": "hand-pass (last 3 minutes of the recording)"},
+  "full_8fps":  {"wall_start": "2026-06-10T11:34:59", "source_offset_s": 0, "phase": "whole recording at 8 fps"},
+  "full_1fps":  {"wall_start": "2026-06-10T11:34:59", "source_offset_s": 0, "phase": "whole recording at 1 fps"}
+}

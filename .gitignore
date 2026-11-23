@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Generated runs, datasets and outputs
+out/
+runs/
+exports/
+clips/
+datasets/
+
+# Source media (large binaries)
+assets/*.mp4
+
+# Editors / OS
+.DS_Store
+*.swp

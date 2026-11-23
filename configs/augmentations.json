@@ -1,0 +1,8 @@
+{
+  "seed": 42,
+  "selected": [
+    {"name": "horizontal_flip", "p": 0.5, "params": {}},
+    {"name": "rotation", "p": 0.4, "params": {"limit": 12}},
+    {"name": "brightness", "p": 0.25, "params": {"limit": 0.15}}
+  ]
+}

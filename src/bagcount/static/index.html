@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bag Counting</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --panel: #ffffff; --ink: #14171c; --muted: #5d6572; --line: #e2e5ea;
+    --accent: #1f6feb; --ok: #1a9c4b; --ok-bg: #e4f6ea; --bad: #d33a2f; --bad-bg: #fbe7e5;
+    --warn: #b7791f; --warn-bg: #fdf3dc; --chip: #eef0f3; --shadow: 0 1px 2px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1216; --panel: #181c22; --ink: #e8eaee; --muted: #98a1ad; --line: #2a303a;
+      --accent: #4c8dff; --ok: #3dd072; --ok-bg: #12301d; --bad: #ff6b60; --bad-bg: #3a1a17;
+      --warn: #e4a53a; --warn-bg: #3a2c12; --chip: #232932; --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1216; --panel: #181c22; --ink: #e8eaee; --muted: #98a1ad; --line: #2a303a;
+    --accent: #4c8dff; --ok: #3dd072; --ok-bg: #12301d; --bad: #ff6b60; --bad-bg: #3a1a17;
+    --warn: #e4a53a; --warn-bg: #3a2c12; --chip: #232932; --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; }
+  header { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-bottom: 1px solid var(--line);
+    background: var(--panel); position: sticky; top: 0; z-index: 5; flex-wrap: wrap; }
+  header h1 { font-size: 17px; margin: 0; font-weight: 650; letter-spacing: .01em; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  .tabs { display: flex; gap: 4px; background: var(--chip); border-radius: 8px; padding: 3px; margin-left: auto; }
+  .tabs button { border: 0; background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 6px;
+    font: inherit; font-weight: 600; cursor: pointer; }
+  .tabs button.on { background: var(--panel); color: var(--ink); box-shadow: var(--shadow); }
+  main { padding: 16px; max-width: 1500px; margin: 0 auto; }
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+  select, input[type=number], input[type=text] { font: inherit; padding: 7px 10px; border: 1px solid var(--line);
+    border-radius: 8px; background: var(--panel); color: var(--ink); }
+  label.f { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); }
+  .btn { font: inherit; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--ink); cursor: pointer; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.danger { color: var(--bad); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; box-shadow: var(--shadow); }
+  .kpi .l { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+  .kpi .v { font-size: 34px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .kpi .d { font-size: 12px; color: var(--muted); }
+  .kpi.ok .v { color: var(--ok); } .kpi.bad .v { color: var(--bad); } .kpi.accent .v { color: var(--accent); }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 14px; }
+  @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .panel h2 { font-size: 13px; margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--line); color: var(--muted);
+    text-transform: uppercase; letter-spacing: .06em; display: flex; align-items: center; gap: 8px; }
+  .panel h2 .right { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .vid { background: #000; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; position: relative; }
+  .vid video, .vid img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .vid .empty { color: #889; font-size: 14px; text-align: center; padding: 20px; }
+  .legend { display: flex; gap: 14px; padding: 8px 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
+  .events { max-height: 640px; overflow-y: auto; }
+  .ev { display: grid; grid-template-columns: 96px 1fr; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line);
+    cursor: pointer; align-items: center; }
+  .ev:hover { background: var(--chip); }
+  .ev.future { opacity: .35; }
+  .ev.now { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .ev img { width: 96px; aspect-ratio: 16/9; object-fit: cover; border-radius: 6px; background: #000; }
+  .ev .t { font-weight: 650; font-variant-numeric: tabular-nums; }
+  .ev .m { color: var(--muted); font-size: 12px; }
+  .chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .chip.loaded { background: var(--ok-bg); color: var(--ok); }
+  .chip.unloaded { background: var(--bad-bg); color: var(--bad); }
+  .chip.inferred { background: var(--warn-bg); color: var(--warn); }
+  .chip.neutral { background: var(--chip); color: var(--muted); }
+  .truth { padding: 10px 14px; font-size: 13px; border-top: 1px solid var(--line); color: var(--muted); }
+  .truth b { color: var(--ink); }
+  .status { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); margin-right: 6px; }
+  .dot.live { background: var(--bad); animation: blink 1.2s infinite; }
+  @keyframes blink { 50% { opacity: .3; } }
+  .hidden { display: none !important; }
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: flex; align-items: center; justify-content: center; z-index: 20; cursor: zoom-out; }
+  .lightbox img { max-width: 96vw; max-height: 92vh; border-radius: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Bag counting · MDP Loading Point</h1>
+    <div class="sub">Every counted bag is logged with its camera time and a snapshot, so the tally can be audited.</div>
+  </div>
+  <div class="tabs">
+    <button id="tab-rec" class="on">Recorded runs</button>
+    <button id="tab-live">Live</button>
+  </div>
+</header>
+
+<main>
+  <!-- ---------------- recorded ---------------- -->
+  <section id="rec">
+    <div class="toolbar">
+      <label class="f">Run
+        <select id="run-select" style="min-width:320px"></select>
+      </label>
+      <span id="run-meta" class="status"></span>
+    </div>
+    <div class="kpis">
+      <div class="kpi ok"><div class="l">Loaded</div><div class="v" id="r-loaded">–</div><div class="d">dock → truck</div></div>
+      <div class="kpi bad"><div class="l">Unloaded</div><div class="v" id="r-unloaded">–</div><div class="d">truck → dock</div></div>
+      <div class="kpi accent"><div class="l">On truck</div><div class="v" id="r-net">–</div><div class="d">loaded − unloaded</div></div>
+      <div class="kpi" id="r-truth-kpi"><div class="l">Hand count</div><div class="v" id="r-truth">–</div><div class="d" id="r-truth-d">no ground truth for this clip</div></div>
+    </div>
+    <div class="grid">
+      <div class="panel">
+        <h2>Annotated video <span class="right status" id="r-clock"></span></h2>
+        <div class="vid" id="r-vid"><div class="empty">Select a run</div></div>
+        <div class="legend">
+          <span><i style="background:#00a0ff"></i>truck bed zone</span>
+          <span><i style="background:#ffc800"></i>dock zone</span>
+          <span><i style="background:#00c853"></i>loaded event</span>
+          <span><i style="background:#e53935"></i>unloaded event</span>
+          <span>Click an event to jump to it. Counters follow the playhead.</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Event log <span class="right" id="r-count"></span></h2>
+        <div class="events" id="r-events"></div>
+        <div class="truth" id="r-truth-detail"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------- live ---------------- -->
+  <section id="live" class="hidden">
+    <div class="toolbar">
+      <label class="f">Source
+        <select id="l-source" style="min-width:300px"></select>
+      </label>
+      <label class="f">Detector
+        <select id="l-weights"></select>
+      </label>
+      <label class="f">Confidence
+        <input id="l-conf" type="number" min="0.05" max="0.9" step="0.05" value="0.25" style="width:90px">
+      </label>
+      <label class="f">Max frames (0 = all)
+        <input id="l-max" type="number" min="0" step="100" value="0" style="width:110px">
+      </label>
+      <button class="btn primary" id="l-start">Start</button>
+      <button class="btn danger" id="l-stop" disabled>Stop</button>
+      <span class="status" id="l-status"><span class="dot"></span>idle</span>
+    </div>
+    <div class="kpis">
+      <div class="kpi ok"><div class="l">Loaded</div><div class="v" id="l-loaded">0</div><div class="d">dock → truck</div></div>
+      <div class="kpi bad"><div class="l">Unloaded</div><div class="v" id="l-unloaded">0</div><div class="d">truck → dock</div></div>
+      <div class="kpi accent"><div class="l">On truck</div><div class="v" id="l-net">0</div><div class="d">loaded − unloaded</div></div>
+      <div class="kpi"><div class="l">Throughput</div><div class="v" id="l-fps">–</div><div class="d">frames / s processed</div></div>
+    </div>
+    <div class="grid">
+      <div class="panel">
+        <h2>Live view <span class="right status" id="l-clock"></span></h2>
+        <div class="vid" id="l-vid"><div class="empty">Start a run to see the annotated feed.<br>The same pipeline will read an RTSP camera URL on site.</div></div>
+        <div class="legend">
+          <span><i style="background:#00a0ff"></i>truck bed zone</span>
+          <span><i style="background:#ffc800"></i>dock zone</span>
+          <span>Frames are processed as fast as the GPU allows; the feed shows the latest one.</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Event feed <span class="right" id="l-count"></span></h2>
+        <div class="events" id="l-events"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="lightbox" class="lightbox hidden"><img id="lightbox-img" alt=""></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const fmtT = (s) => { s = Math.max(0, s); const m = Math.floor(s / 60); return `${m}:${(s - m * 60).toFixed(1).padStart(4, '0')}`; };
+const api = async (url, opt) => { const r = await fetch(url, opt); if (!r.ok) throw new Error(await r.text()); return r.json(); };
+
+// ---- tabs ----
+function showTab(t) {
+  $('rec').classList.toggle('hidden', t !== 'rec');
+  $('live').classList.toggle('hidden', t !== 'live');
+  $('tab-rec').classList.toggle('on', t === 'rec');
+  $('tab-live').classList.toggle('on', t === 'live');
+  if (t === 'live') initLive();
+}
+$('tab-rec').onclick = () => showTab('rec');
+$('tab-live').onclick = () => showTab('live');
+
+// ---- lightbox ----
+$('lightbox').onclick = () => $('lightbox').classList.add('hidden');
+function zoom(src) { $('lightbox-img').src = src; $('lightbox').classList.remove('hidden'); }
+
+function eventCard(ev, run, onClick) {
+  const d = document.createElement('div');
+  d.className = 'ev'; d.dataset.t = ev.time_s;
+  const img = ev.thumb ? `<img src="/out/${run}/events/${ev.thumb}" loading="lazy" alt="">` : '<div></div>';
+  d.innerHTML = `${img}<div>
+      <div class="t">#${ev.idx} · ${ev.clock || fmtT(ev.time_s)}</div>
+      <div><span class="chip ${ev.direction}">${ev.direction}</span>
+           ${ev.inferred ? '<span class="chip inferred" title="track lost in transit; destination inferred from heading">inferred</span>' : ''}
+           <span class="chip neutral">on truck: ${ev.on_truck}</span></div>
+      <div class="m">t = ${fmtT(ev.time_s)} · track ${ev.track_id}</div></div>`;
+  d.onclick = onClick;
+  const im = d.querySelector('img');
+  if (im) im.onclick = (e) => { e.stopPropagation(); zoom(im.src); };
+  return d;
+}
+
+// ---- recorded ----
+let REC = null;
+async function loadRuns() {
+  const runs = await api('/api/runs');
+  const sel = $('run-select');
+  sel.innerHTML = '';
+  for (const r of runs) {
+    const o = document.createElement('option');
+    o.value = r.name;
+    const truth = r.truth ? ` · hand count ${r.truth.true_loaded}` : '';
+    o.textContent = `${r.name} — ${r.clip} (${fmtT(r.duration_s)}) · loaded ${r.loaded}${truth}${r.video ? '' : ' · no video'}`;
+    sel.appendChild(o);
+  }
+  sel.onchange = () => loadRun(sel.value);
+  const want = new URLSearchParams(location.search).get('run');
+  if (want && runs.some(r => r.name === want)) sel.value = want;
+  if (runs.length) loadRun(sel.value);
+}
+
+async function loadRun(name) {
+  const r = await api(`/api/runs/${name}`);
+  REC = r;
+  history.replaceState(null, '', `?run=${name}`);
+  $('run-meta').textContent = `${r.phase || ''}${r.wall_start ? ' · camera ' + r.wall_start.replace('T', ' ') : ''} · ${r.frames} frames @ ${r.fps} fps`;
+  setCounts('r', r.loaded, r.unloaded);
+  // ground truth tile
+  const k = $('r-truth-kpi');
+  if (r.truth) {
+    const t = r.truth;
+    $('r-truth').textContent = t.true_loaded + (t.true_unloaded ? ` / ${t.true_unloaded}` : '');
+    const exact = t.fp === 0 && t.fn === 0;
+    $('r-truth-d').textContent = exact ? `all ${t.tp} matched within ±5 s` : `${t.tp} matched · ${t.fp} extra · ${t.fn} missed`;
+    k.className = 'kpi ' + (exact ? 'ok' : 'bad');
+    let det = `Hand-counted ground truth <b>${t.file}</b> for the first ${fmtT(t.window_s)}: ` +
+      `<b>${t.true_loaded}</b> loaded, <b>${t.true_unloaded}</b> unloaded. ` +
+      `Detector found <b>${t.pred_loaded}</b> / <b>${t.pred_unloaded}</b> in that window. ` +
+      `Precision <b>${(t.precision * 100).toFixed(0)}%</b>, recall <b>${(t.recall * 100).toFixed(0)}%</b>.`;
+    if (t.missed.length) det += ` Missed at ${t.missed.map(x => fmtT(x[0])).join(', ')}.`;
+    if (t.false.length) det += ` Extra at ${t.false.map(x => fmtT(x[0])).join(', ')}.`;
+    $('r-truth-detail').innerHTML = det;
+  } else {
+    $('r-truth').textContent = '–'; $('r-truth-d').textContent = 'no ground truth for this clip'; k.className = 'kpi';
+    $('r-truth-detail').innerHTML = 'No hand count for this clip yet.';
+  }
+  // video
+  const vb = $('r-vid');
+  vb.innerHTML = r.video ? `<video id="r-video" src="/out/${name}/annotated.mp4" controls playsinline preload="metadata"></video>`
+                         : '<div class="empty">This run was made without <code>--video</code>; thumbnails only.</div>';
+  // events
+  const list = $('r-events');
+  list.innerHTML = '';
+  $('r-count').textContent = `${r.events.length} events`;
+  for (const ev of r.events) list.appendChild(eventCard(ev, name, () => seek(ev.time_s)));
+  const v = $('r-video');
+  if (v) {
+    v.ontimeupdate = () => followPlayhead(v.currentTime);
+    v.onseeked = () => followPlayhead(v.currentTime);
+    followPlayhead(0);
+  }
+}
+
+function setCounts(p, loaded, unloaded) {
+  $(`${p}-loaded`).textContent = loaded; $(`${p}-unloaded`).textContent = unloaded; $(`${p}-net`).textContent = loaded - unloaded;
+}
+
+function seek(t) {
+  const v = $('r-video'); if (!v) return;
+  v.currentTime = Math.max(0, t - 2.5); v.play();
+}
+
+function followPlayhead(t) {
+  if (!REC) return;
+  let loaded = 0, unloaded = 0, last = null;
+  for (const ev of REC.events) {
+    if (ev.time_s <= t + 0.05) { if (ev.direction === 'loaded') loaded++; else unloaded++; last = ev; }
+  }
+  setCounts('r', loaded, unloaded);
+  $('r-clock').textContent = `t = ${fmtT(t)}${REC.wall_start ? ' · camera ' + clockAt(t) : ''}`;
+  let nowEl = null;
+  for (const el of $('r-events').children) {
+    const et = parseFloat(el.dataset.t);
+    el.classList.toggle('future', et > t + 0.05);
+    el.classList.remove('now');
+    if (et <= t + 0.05 && t - et < 4) nowEl = el;
+  }
+  if (nowEl) { nowEl.classList.add('now'); if (!$('r-video').paused) nowEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+}
+
+function clockAt(t) {
+  const [h, m, s] = REC.wall_start.slice(11, 19).split(':').map(Number);
+  let secs = h * 3600 + m * 60 + s + t;
+  secs = ((secs % 86400) + 86400) % 86400;
+  const hh = Math.floor(secs / 3600), mm = Math.floor(secs % 3600 / 60), ss = Math.floor(secs % 60);
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+}
+
+// ---- live ----
+let liveInit = false, es = null, liveRun = null;
+async function initLive() {
+  if (liveInit) return; liveInit = true;
+  const [sources, weights] = await Promise.all([api('/api/sources'), api('/api/weights')]);
+  const ss = $('l-source'); ss.innerHTML = '';
+  for (const s of sources) {
+    const o = document.createElement('option'); o.value = s.path;
+    o.textContent = `${s.name} — ${s.phase || 'clip'} (${fmtT(s.duration_s)}, ${s.fps} fps)`;
+    ss.appendChild(o);
+  }
+  const custom = document.createElement('option'); custom.value = '__custom'; custom.textContent = 'RTSP / other URL…'; ss.appendChild(custom);
+  ss.onchange = () => { if (ss.value === '__custom') { const u = prompt('Stream URL (rtsp://…)'); if (u) { const o = document.createElement('option'); o.value = u; o.textContent = u; ss.insertBefore(o, custom); ss.value = u; } else ss.selectedIndex = 0; } };
+  const ws = $('l-weights'); ws.innerHTML = '';
+  for (const w of weights) { const o = document.createElement('option'); o.value = w; o.textContent = w; ws.appendChild(o); }
+  $('l-start').onclick = startLive;
+  $('l-stop').onclick = () => fetch('/api/live/stop', { method: 'POST' });
+  const st = await api('/api/live/status');
+  if (st.running) attachLive(st.run);
+}
+
+async function startLive() {
+  $('l-start').disabled = true;
+  try {
+    const body = { source: $('l-source').value, weights: $('l-weights').value, conf: parseFloat($('l-conf').value),
+                   max_frames: parseInt($('l-max').value || '0', 10), save_video: true };
+    const r = await api('/api/live/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    $('l-events').innerHTML = ''; setCounts('l', 0, 0); $('l-count').textContent = '';
+    attachLive(r.run);
+  } catch (e) { alert(e.message); $('l-start').disabled = false; }
+}
+
+function attachLive(run) {
+  liveRun = run;
+  $('l-stop').disabled = false; $('l-start').disabled = true;
+  $('l-vid').innerHTML = `<img src="/api/live/stream?${Date.now()}" alt="live annotated feed">`;
+  if (es) es.close();
+  es = new EventSource('/api/live/events');
+  es.addEventListener('bag', (m) => {
+    const ev = JSON.parse(m.data);
+    const list = $('l-events');
+    list.insertBefore(eventCard(ev, run, () => {}), list.firstChild);
+    $('l-count').textContent = `${list.children.length} events`;
+  });
+  es.addEventListener('status', (m) => {
+    const s = JSON.parse(m.data);
+    setCounts('l', s.loaded, s.unloaded);
+    $('l-fps').textContent = s.proc_fps ? s.proc_fps.toFixed(1) : '–';
+    $('l-clock').textContent = s.frame >= 0 ? `frame ${s.frame} · t = ${fmtT(s.t)}` : '';
+    const dot = s.running ? '<span class="dot live"></span>' : '<span class="dot"></span>';
+    $('l-status').innerHTML = dot + (s.running ? `processing ${s.source}` : s.error ? `error: ${s.error}` : s.finished ? `finished ${s.source} → out/${s.run}` : 'idle');
+    if (!s.running) {
+      $('l-stop').disabled = true; $('l-start').disabled = false;
+      if (s.finished) { es.close(); es = null; loadRuns(); }
+    }
+  });
+}
+
+loadRuns();
+</script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+[tools]
+python = "3.12.16"
+uv = "0.13.0"
+
+[env]
+_.python.venv = { path = ".venv", create = true }
+
+[tasks.install]
+description = "Install project dependencies into .venv"
+run = "uv sync"
+
+[tasks.clip]
+description = "Extract a downsampled test clip: mise run clip -- <start_sec> <duration_sec> <name>"
+run = "python scripts/utils/make_clip.py"
+
+[tasks.count]
+description = "Run the bag counter on a video: mise run count -- <video>"
+run = "python -m bagcount.cli"
+
+[tasks.label]
+description = "Pseudo-label frames with Grounding DINO: mise run label -- <video> datasets/bags --every 20"
+run = "python scripts/legacy/pseudo_label.py"
+
+[tasks.review]
+description = "Render label sheets: mise run review -- <dataset> <train|val> <out> --per-sheet 12"
+run = "python scripts/legacy/review_labels.py"
+
+[tasks.review-all]
+description = "Render train + val label sheets: mise run review-all -- <dataset> <out> --per-sheet 12"
+run = "python scripts/legacy/review_all.py"
+
+[tasks.sheets]
+description = "Build hand-count review sheets: mise run sheets -- <video> <out> --start 0 --duration 180"
+run = "python scripts/utils/make_sheets.py"
+
+[tasks.propagate]
+description = "Propagate labels with a checkpoint: mise run propagate -- <video> <out> --weights <ckpt>"
+run = "python scripts/legacy/propagate_labels.py"
+
+[tasks.merge]
+description = "Merge label sources: mise run merge -- datasets/bags_v5 --src datasets/bags_v3"
+run = "python scripts/legacy/build_dataset.py"
+
+[tasks.train]
+description = "Fine-tune the bag detector"
+run = "python scripts/legacy/train.py"
+
+[tasks.test]
+description = "Run unit tests"
+run = "python -m pytest -q"
+
+[tasks.verify]
+description = "Verify setup, dependencies and model artifacts: mise run verify [-- --smoke]"
+run = "python scripts/utils/verify.py"
+
+[tasks.check]
+description = "Alias for mise run verify"
+run = "python scripts/utils/verify.py"
+
+[tasks.check-labels]
+description = "Count labelled boxes: mise run check-labels -- datasets/bags_full train"
+run = "python scripts/legacy/check_labels.py"
+
+[tasks.check-balance]
+description = "Verify label counts and class balance before training: mise run check-balance -- datasets/bags_full --class bag"
+run = "python scripts/legacy/check_class_balance.py"
+
+[tasks.eval]
+description = "Compare events.csv against a ground-truth CSV: mise run eval -- out/run/events.csv truth.csv"
+run = "python -m bagcount.evaluate"
+
+[tasks.eval-all]
+description = "Score the counter on all hand-counted windows: mise run eval-all -- <weights> <tag>"
+run = "scripts/evaluation/eval_all.sh"
+
+[tasks.export]
+description = "Export an RF-DETR checkpoint to ONNX: mise run export -- --weights <ckpt> --out <dir>"
+run = "python scripts/utils/export_onnx.py"
+
+[tasks.serve]
+description = "Demo / operator web UI on http://127.0.0.1:8008 (recorded runs + live mode)"
+run = "python -m bagcount.server"
+
+[tasks.data]
+description = "Bag-only data preparation and RF-DETR training CLI"
+run = "python scripts/workflow/data_pipeline.py"
+
+[tasks.data-prepare]
+description = "Sample local image/video/ZIP paths and generate bag-only YOLO labels"
+run = "python scripts/workflow/data_pipeline.py prepare"
+
+[tasks.data-review]
+description = "Print dataset statistics and render an annotated preview sheet"
+run = "python scripts/workflow/data_pipeline.py review"
+
+[tasks.data-split]
+description = "Create reproducible train, validation, and test splits"
+run = "python scripts/workflow/data_pipeline.py split"
+
+[tasks.data-augment]
+description = "Apply configured Albumentations to training images only"
+run = "python scripts/workflow/data_pipeline.py augment"
+
+[tasks.data-train]
+description = "Train RF-DETR and report held-out test metrics (--data sets an explicit data.yaml)"
+run = "python scripts/workflow/data_pipeline.py train"
